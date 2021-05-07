@@ -163,12 +163,14 @@ test-suite websocket-dump-next-test
       TypeOperators
   ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -fhide-source-paths -Wpartial-fields -fplugin=Polysemy.Plugin -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , base >=4.7 && <5
     , bytestring
     , constraints
     , containers
     , generic-lens
+    , hspec
     , http-api-data
     , lens
     , polysemy

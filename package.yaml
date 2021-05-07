@@ -97,3 +97,5 @@ tests:
       - -with-rtsopts=-N
     dependencies:
       - websocket-dump-next
+      - hspec
+      - QuickCheck
