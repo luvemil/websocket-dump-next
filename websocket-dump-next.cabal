@@ -1,0 +1,183 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           websocket-dump-next
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/luvemil/websocket-dump-next#readme>
+homepage:       https://github.com/luvemil/websocket-dump-next#readme
+bug-reports:    https://github.com/luvemil/websocket-dump-next/issues
+author:         Marco Tarantino
+maintainer:     taran.marco@protonmail.com
+copyright:      2021 Marco Tarantino
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/luvemil/websocket-dump-next
+
+library
+  exposed-modules:
+      Domain.Types
+      ExternalInterfaces.ApplicationAssembly
+      InterfaceAdapters.Config
+      Lib.StringNum
+      Lib.Utils
+  other-modules:
+      Paths_websocket_dump_next
+  hs-source-dirs:
+      src
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      OverloadedStrings
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -fhide-source-paths -Wpartial-fields -fplugin=Polysemy.Plugin
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , constraints
+    , containers
+    , generic-lens
+    , http-api-data
+    , lens
+    , polysemy
+    , polysemy-plugin
+    , sqlite-simple
+    , text
+    , time
+    , unordered-containers
+    , uuid
+    , vector
+  default-language: Haskell2010
+
+executable websocket-dump-next-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_websocket_dump_next
+  hs-source-dirs:
+      app
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      OverloadedStrings
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -fhide-source-paths -Wpartial-fields -fplugin=Polysemy.Plugin -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , constraints
+    , containers
+    , generic-lens
+    , http-api-data
+    , lens
+    , polysemy
+    , polysemy-plugin
+    , sqlite-simple
+    , text
+    , time
+    , unordered-containers
+    , uuid
+    , vector
+    , websocket-dump-next
+  default-language: Haskell2010
+
+test-suite websocket-dump-next-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      DummySpec
+      Paths_websocket_dump_next
+  hs-source-dirs:
+      test
+  default-extensions:
+      BangPatterns
+      ConstraintKinds
+      DataKinds
+      DeriveGeneric
+      DerivingStrategies
+      DerivingVia
+      FlexibleContexts
+      FlexibleInstances
+      GADTs
+      GeneralizedNewtypeDeriving
+      InstanceSigs
+      KindSignatures
+      LambdaCase
+      MultiParamTypeClasses
+      OverloadedStrings
+      OverloadedLabels
+      PolyKinds
+      RankNTypes
+      RecordWildCards
+      ScopedTypeVariables
+      TypeApplications
+      TypeFamilies
+      TypeOperators
+  ghc-options: -Wall -Wincomplete-uni-patterns -Wincomplete-record-updates -Wcompat -Widentities -Wredundant-constraints -fhide-source-paths -Wpartial-fields -fplugin=Polysemy.Plugin -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , constraints
+    , containers
+    , generic-lens
+    , http-api-data
+    , lens
+    , polysemy
+    , polysemy-plugin
+    , sqlite-simple
+    , text
+    , time
+    , unordered-containers
+    , uuid
+    , vector
+    , websocket-dump-next
+  default-language: Haskell2010

@@ -1,0 +1,99 @@
+name: websocket-dump-next
+version: 0.1.0.0
+github: "luvemil/websocket-dump-next"
+license: BSD3
+author: "Marco Tarantino"
+maintainer: "taran.marco@protonmail.com"
+copyright: "2021 Marco Tarantino"
+
+extra-source-files:
+  - README.md
+  - ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description: Please see the README on GitHub at <https://github.com/luvemil/websocket-dump-next#readme>
+
+dependencies:
+  - base >= 4.7 && < 5
+  - bytestring
+  - aeson
+  - text
+  - time
+  - containers
+  - constraints
+  - lens
+  - generic-lens
+  - http-api-data
+  - unordered-containers
+  - uuid
+  - vector
+  - polysemy
+  - polysemy-plugin
+  - sqlite-simple
+
+ghc-options:
+  - -Wall
+  - -Wincomplete-uni-patterns
+  - -Wincomplete-record-updates
+  - -Wcompat
+  - -Widentities
+  - -Wredundant-constraints
+  - -fhide-source-paths
+  - -Wpartial-fields
+  - -fplugin=Polysemy.Plugin
+
+default-extensions:
+  - BangPatterns
+  - ConstraintKinds
+  - DataKinds
+  - DeriveGeneric
+  - DerivingStrategies
+  - DerivingVia
+  - FlexibleContexts
+  - FlexibleInstances
+  - GADTs
+  - GeneralizedNewtypeDeriving
+  - InstanceSigs
+  - KindSignatures
+  - LambdaCase
+  - MultiParamTypeClasses
+  - OverloadedStrings
+  - OverloadedLabels
+  - PolyKinds
+  - RankNTypes
+  - RecordWildCards
+  - ScopedTypeVariables
+  - TypeApplications
+  - TypeFamilies
+  - TypeOperators
+
+library:
+  source-dirs: src
+
+executables:
+  websocket-dump-next-exe:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - websocket-dump-next
+
+tests:
+  websocket-dump-next-test:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - websocket-dump-next
