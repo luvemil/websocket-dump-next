@@ -36,6 +36,7 @@ dependencies:
   - polysemy
   - polysemy-plugin
   - sqlite-simple
+  - optparse-generic
 
 ghc-options:
   - -Wall

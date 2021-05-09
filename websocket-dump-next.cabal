@@ -25,11 +25,15 @@ source-repository head
 
 library
   exposed-modules:
+      Domain.Command
       Domain.Types
       ExternalInterfaces.ApplicationAssembly
+      InterfaceAdapters.CommandEntryPoint
+      InterfaceAdapters.CommandInterpreterIO
       InterfaceAdapters.Config
       Lib.StringNum
       Lib.Utils
+      UseCases.CommandInterpreter
   other-modules:
       Paths_websocket_dump_next
   hs-source-dirs:
@@ -68,6 +72,7 @@ library
     , generic-lens
     , http-api-data
     , lens
+    , optparse-generic
     , polysemy
     , polysemy-plugin
     , sqlite-simple
@@ -118,6 +123,7 @@ executable websocket-dump-next-exe
     , generic-lens
     , http-api-data
     , lens
+    , optparse-generic
     , polysemy
     , polysemy-plugin
     , sqlite-simple
@@ -173,6 +179,7 @@ test-suite websocket-dump-next-test
     , hspec
     , http-api-data
     , lens
+    , optparse-generic
     , polysemy
     , polysemy-plugin
     , sqlite-simple
