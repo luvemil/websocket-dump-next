@@ -37,6 +37,11 @@ dependencies:
   - polysemy-plugin
   - sqlite-simple
   - optparse-generic
+  - websockets
+  - wuss
+  - network
+  - unliftio
+  - unliftio-core
 
 ghc-options:
   - -Wall
