@@ -5,6 +5,7 @@ import Control.Concurrent.STM
 import Control.Lens.Operators
 import Control.Monad (forever)
 import qualified Data.ByteString.Lazy.Char8 as BS
+import qualified Domain.CryptoWatch.WS as CW
 import Network.Socket
 import qualified Network.WebSockets as WS
 import Polysemy
@@ -65,9 +66,7 @@ runWithOptions (WSClientOptions apiKey globalChan) = do
             & asyncToIO
             & runM
     onOpen conn = embed $ WS.sendTextData conn krakenSub
-    krakenSub :: BS.ByteString
-    krakenSub =
-        "{\"subscribe\":{\"subscriptions\":[{\"streamSubscription\":{\"resource\":\"markets:87:trades\"}}]}}"
+    krakenSub = CW.subscribePayload ["markets:87:trades"]
     onMessage = embed . BS.putStrLn
     host = "stream.cryptowat.ch"
     port = 443

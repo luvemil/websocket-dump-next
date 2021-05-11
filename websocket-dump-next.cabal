@@ -26,6 +26,7 @@ source-repository head
 library
   exposed-modules:
       Domain.Command
+      Domain.CryptoWatch.WS
       Domain.Types
       ExternalInterfaces.ApplicationAssembly
       InterfaceAdapters.CommandEntryPoint
@@ -154,6 +155,7 @@ test-suite websocket-dump-next-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Domain.CryptoWatchSpec
       DummySpec
       Paths_websocket_dump_next
   hs-source-dirs:
