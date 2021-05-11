@@ -78,8 +78,10 @@ library
     , polysemy
     , polysemy-plugin
     , sqlite-simple
+    , stm
     , text
     , time
+    , unix
     , unliftio
     , unliftio-core
     , unordered-containers
@@ -134,8 +136,10 @@ executable websocket-dump-next-exe
     , polysemy
     , polysemy-plugin
     , sqlite-simple
+    , stm
     , text
     , time
+    , unix
     , unliftio
     , unliftio-core
     , unordered-containers
@@ -195,8 +199,10 @@ test-suite websocket-dump-next-test
     , polysemy
     , polysemy-plugin
     , sqlite-simple
+    , stm
     , text
     , time
+    , unix
     , unliftio
     , unliftio-core
     , unordered-containers

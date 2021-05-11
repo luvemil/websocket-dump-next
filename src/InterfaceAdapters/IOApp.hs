@@ -1,38 +1,74 @@
 module InterfaceAdapters.IOApp where
 
-import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.STM
+import Control.Lens.Operators
 import Control.Monad (forever)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Network.Socket
 import qualified Network.WebSockets as WS
+import Polysemy
+import Polysemy.Async
+import Polysemy.Input
 import System.Environment
-import UnliftIO
+import System.Posix.Signals
 import Wuss
 
-runSecureClientUnlifted ::
-    MonadUnliftIO m => HostName -> PortNumber -> String -> (WS.Connection -> m a) -> m a
-runSecureClientUnlifted host port str inner =
-    withRunInIO $ \runInIO ->
-        runSecureClient host port str (runInIO . inner)
+type SemClientApp r a = WS.Connection -> Sem r a
 
-runConfig :: WS.ClientApp () -> (BS.ByteString -> IO ()) -> (WS.Connection -> IO ())
+runConfig :: Member (Embed IO) r => WS.ClientApp () -> (BS.ByteString -> Sem r ()) -> (WS.Connection -> Sem r ())
 runConfig onOpen onMessage conn = do
-    _ <- forkIO $ onOpen conn
+    _ <- embed . forkIO $ onOpen conn
     forever $ do
-        msg <- liftIO $ WS.receiveData conn
+        msg <- embed $ WS.receiveData conn
         onMessage msg
 
+runSemConnection ::
+    (Member (Embed IO) r, Member Async r, Member (Input (TChan Int)) r) =>
+    -- | onOpen
+    SemClientApp r () ->
+    -- | onMessage
+    (BS.ByteString -> Sem r ()) ->
+    SemClientApp r ()
+runSemConnection onOpen onMessage conn = do
+    onOpen conn
+    _ <- async $ do
+        channel <- input
+        readableChannel <- embed . atomically $ dupTChan channel
+        forever $ do
+            msg <- embed . atomically $ readTChan readableChannel
+            case msg of
+                -1 -> do
+                    embed $ WS.sendClose conn ("Adieu" :: BS.ByteString)
+                    forever $ do
+                        embed $ putStrLn "Waiting for the connection to close..."
+                        embed $ threadDelay (2 * 1000 * 1000)
+                _ -> pure ()
+    forever $ do
+        msg <- embed $ WS.receiveData conn
+        onMessage msg
+
+data WSClientOptions = WSClientOptions
+    { apiKey :: String
+    , globalChan :: TChan Int
+    }
+
 -- Out to IO ()
-runWithOptions :: String -> IO ()
-runWithOptions apiKey = do
-    runSecureClientUnlifted host port path app
+runWithOptions :: WSClientOptions -> IO ()
+runWithOptions (WSClientOptions apiKey globalChan) = do
+    runSecureClient host port path app
   where
-    app = runConfig onOpen onMessage
-    onOpen conn = WS.sendTextData conn krakenSub
+    app = interpretApp . runSemConnection onOpen onMessage
+    interpretApp c =
+        c
+            & runInputConst globalChan
+            & asyncToIO
+            & runM
+    onOpen conn = embed $ WS.sendTextData conn krakenSub
     krakenSub :: BS.ByteString
     krakenSub =
         "{\"subscribe\":{\"subscriptions\":[{\"streamSubscription\":{\"resource\":\"markets:87:trades\"}}]}}"
-    onMessage = BS.putStrLn
+    onMessage = embed . BS.putStrLn
     host = "stream.cryptowat.ch"
     port = 443
     path = "/connect?apikey=" ++ apiKey
@@ -40,6 +76,11 @@ runWithOptions apiKey = do
 ioApp :: IO ()
 ioApp = do
     apiKey <- lookupEnv "CW_API_KEY"
+    mainChannel <- newBroadcastTChanIO
+    let handleClose = do
+            putStrLn "Shutting down gracefully"
+            atomically $ writeTChan mainChannel (-1 :: Int)
+    _ <- installHandler keyboardSignal (Catch handleClose) Nothing
     case apiKey of
-        Just key -> runWithOptions key
+        Just key -> runWithOptions (WSClientOptions key mainChannel)
         Nothing -> fail "CW_API_KEY not found"
