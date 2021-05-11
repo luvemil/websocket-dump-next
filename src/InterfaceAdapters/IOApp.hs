@@ -24,14 +24,16 @@ runConfig onOpen onMessage conn = do
         msg <- embed $ WS.receiveData conn
         onMessage msg
 
-runSemConnection ::
+data WSAppConfig r = WSAppConfig
+    { onOpen :: SemClientApp r ()
+    , onMessage :: BS.ByteString -> Sem r ()
+    }
+
+wsApp ::
     (Member (Embed IO) r, Member Async r, Member (Input (TChan Int)) r) =>
-    -- | onOpen
-    SemClientApp r () ->
-    -- | onMessage
-    (BS.ByteString -> Sem r ()) ->
+    WSAppConfig r ->
     SemClientApp r ()
-runSemConnection onOpen onMessage conn = do
+wsApp (WSAppConfig onOpen onMessage) conn = do
     onOpen conn
     _ <- async $ do
         channel <- input
@@ -59,7 +61,8 @@ runWithOptions :: WSClientOptions -> IO ()
 runWithOptions (WSClientOptions apiKey globalChan) = do
     runSecureClient host port path app
   where
-    app = interpretApp . runSemConnection onOpen onMessage
+    app = interpretApp . wsApp options
+    options = WSAppConfig onOpen onMessage
     interpretApp c =
         c
             & runInputConst globalChan
