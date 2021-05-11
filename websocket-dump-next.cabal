@@ -27,15 +27,20 @@ library
   exposed-modules:
       Domain.Command
       Domain.CryptoWatch.WS
+      Domain.Targets
       Domain.Types
+      Domain.WebSocket
+      Domain.WebSocket.Client.Types
       ExternalInterfaces.ApplicationAssembly
       InterfaceAdapters.CommandEntryPoint
       InterfaceAdapters.CommandInterpreterIO
       InterfaceAdapters.Config
       InterfaceAdapters.IOApp
+      InterfaceAdapters.WebSocketApp
       Lib.StringNum
       Lib.Utils
       UseCases.CommandInterpreter
+      UseCases.WebSocketManager
   other-modules:
       Paths_websocket_dump_next
   hs-source-dirs:
