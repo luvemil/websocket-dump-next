@@ -7,6 +7,7 @@ import qualified Domain.CryptoWatch.WS as CW
 import Domain.Targets
 import Domain.WebSocket
 import InterfaceAdapters.WebSocketApp
+import InterfaceAdapters.WebSocketInterpreters
 import qualified Network.WebSockets as WS
 import Polysemy
 import Polysemy.Async
@@ -29,10 +30,11 @@ runWithOptions (WSClientOptions exchange globalChan) = do
     wsTarget = UC.makeWSConfig exchange
     (WSClientConfig host port path) = clientConfig wsTarget
     wsApp = makeWSApp $ appConfig wsTarget
-    app = interpretApp . wsApp
-    interpretApp c =
-        c
+    app conn =
+        wsApp
             & runInputConst globalChan
+            & runWStoIO
+            & runInputConst conn
             & asyncToIO
             & runM
 

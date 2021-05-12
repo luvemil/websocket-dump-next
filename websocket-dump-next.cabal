@@ -37,9 +37,11 @@ library
       InterfaceAdapters.Config
       InterfaceAdapters.IOApp
       InterfaceAdapters.WebSocketApp
+      InterfaceAdapters.WebSocketInterpreters
       Lib.StringNum
       Lib.Utils
       UseCases.CommandInterpreter
+      UseCases.WebSocket
       UseCases.WebSocketManager
   other-modules:
       Paths_websocket_dump_next

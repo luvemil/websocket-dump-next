@@ -5,17 +5,17 @@ import Control.Concurrent.STM
 import Control.Monad (forever)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Domain.WebSocket
-import qualified Network.WebSockets as WS
 import Polysemy
 import Polysemy.Async
 import Polysemy.Input
+import qualified UseCases.WebSocket as UC
 
 makeWSApp ::
-    (Member (Embed IO) r, Member Async r, Member (Input (TChan Int)) r) =>
+    (Member (Embed IO) r, Member Async r, Member (Input (TChan Int)) r, Member UC.WebSocket r) =>
     WSAppConfig r ->
-    SemClientApp r ()
-makeWSApp (WSAppConfig onOpen onMessage) conn = do
-    onOpen conn
+    Sem r ()
+makeWSApp (WSAppConfig onOpen onMessage) = do
+    onOpen
     _ <- async $ do
         channel <- input
         readableChannel <- embed . atomically $ dupTChan channel
@@ -23,11 +23,11 @@ makeWSApp (WSAppConfig onOpen onMessage) conn = do
             msg <- embed . atomically $ readTChan readableChannel
             case msg of
                 -1 -> do
-                    embed $ WS.sendClose conn ("Adieu" :: BS.ByteString)
+                    UC.sendClose ("Adieu" :: BS.ByteString)
                     forever $ do
                         embed $ putStrLn "Waiting for the connection to close..."
                         embed $ threadDelay (2 * 1000 * 1000)
                 _ -> pure ()
     forever $ do
-        msg <- embed $ WS.receiveData conn
+        msg <- UC.receiveData
         onMessage msg
