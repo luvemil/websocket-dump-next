@@ -1,4 +1,4 @@
-module InterfaceAdapters.IOApp where
+module InterfaceAdapters.WebSocketApp.IO where
 
 import Control.Concurrent.STM
 import Control.Lens.Operators
@@ -6,7 +6,7 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Domain.CryptoWatch.WS as CW
 import Domain.Targets
 import Domain.WebSocket
-import InterfaceAdapters.WebSocketApp
+import InterfaceAdapters.WebSocketApp.Builder
 import InterfaceAdapters.WebSocketInterpreters
 import qualified Network.WebSockets as WS
 import Polysemy
@@ -38,8 +38,8 @@ runWithOptions (WSClientOptions exchange globalChan) = do
             & asyncToIO
             & runM
 
-ioApp :: IO ()
-ioApp = do
+myWebSocketApp :: IO ()
+myWebSocketApp = do
     apiKey <- lookupEnv "CW_API_KEY"
     mainChannel <- newBroadcastTChanIO
     let handleClose = do

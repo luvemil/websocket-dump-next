@@ -35,8 +35,9 @@ library
       InterfaceAdapters.CommandEntryPoint
       InterfaceAdapters.CommandInterpreterIO
       InterfaceAdapters.Config
-      InterfaceAdapters.IOApp
       InterfaceAdapters.WebSocketApp
+      InterfaceAdapters.WebSocketApp.Builder
+      InterfaceAdapters.WebSocketApp.IO
       InterfaceAdapters.WebSocketInterpreters
       Lib.StringNum
       Lib.Utils
