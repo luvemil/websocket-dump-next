@@ -35,6 +35,7 @@ library
       InterfaceAdapters.CommandEntryPoint
       InterfaceAdapters.CommandInterpreterIO
       InterfaceAdapters.Config
+      InterfaceAdapters.Interpreters.Concurrent
       InterfaceAdapters.WebSocketApp
       InterfaceAdapters.WebSocketApp.Builder
       InterfaceAdapters.WebSocketApp.IO
@@ -42,6 +43,7 @@ library
       Lib.StringNum
       Lib.Utils
       UseCases.CommandInterpreter
+      UseCases.Polysemy.Concurrent
       UseCases.WebSocket
       UseCases.WebSocketManager
   other-modules:

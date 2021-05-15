@@ -7,12 +7,16 @@ import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Domain.CryptoWatch.WS as CW
 import Domain.Targets
 import Domain.WebSocket
+import InterfaceAdapters.Interpreters.Concurrent
 import InterfaceAdapters.WebSocketApp.Builder
 import InterfaceAdapters.WebSocketInterpreters
 import qualified Network.WebSockets as WS
-import Polysemy
-import Polysemy.Async
-import Polysemy.Input
+import Polysemy (embed, runM)
+import Polysemy.Async (asyncToIO)
+import Polysemy.Input (runInputConst)
+import Polysemy.Output
+import Polysemy.Trace
+import Polysemy.Writer
 import System.Environment
 import System.Posix.Signals
 import qualified UseCases.WebSocketManager as UC
@@ -51,9 +55,14 @@ runWithOptions (WSClientOptions exchange globalChan isRunning) = do
         wsApp
             & runInputConst globalChan
             & runWStoIO
+            & runConcurrentIO
+            & traceToIO
+            & runOutputSem logMessages
             & runInputConst conn
             & asyncToIO
+            & runSTMtoIO
             & runM
+    logMessages m = embed $ BS.putStrLn m
 
 myWebSocketApp :: IO ()
 myWebSocketApp = do

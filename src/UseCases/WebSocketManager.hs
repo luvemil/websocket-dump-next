@@ -8,35 +8,36 @@ import Domain.WebSocket
 import qualified Network.WebSockets as WS
 import Polysemy
 import Polysemy.Async
+import Polysemy.Output
 import Polysemy.Trace
 import qualified UseCases.WebSocket as UC
 
 subscribeAndCloseAfter ::
-    (Member (Embed IO) r, Member Async r, Member UC.WebSocket r) =>
+    (Member (Embed IO) r, Member Async r, Member UC.WebSocket r, Member Trace r) =>
     BS.ByteString ->
     Int ->
     Sem r ()
 subscribeAndCloseAfter subMsg delay = do
-    embed $ putStrLn "Sending subscribe message"
+    trace "Sending subscribe message"
     _ <- async $ do
         embed $ threadDelay delay
-        embed $ putStrLn "Sending close message"
+        trace "Sending close message"
         UC.sendClose ("Close" :: BS.ByteString)
     UC.sendTextData subMsg
 
-subscribeOnOpen :: (Member (Embed IO) r, Member UC.WebSocket r) => BS.ByteString -> Sem r ()
+subscribeOnOpen :: (Member UC.WebSocket r, Member Trace r) => BS.ByteString -> Sem r ()
 subscribeOnOpen subMsg = do
-    embed $ putStrLn "Sending subscribe message"
+    trace "Sending subscribe message"
     UC.sendTextData subMsg
 
-cryptoWatchWSPayload :: (Member (Embed IO) r, Member UC.WebSocket r) => WSAppConfig r
+cryptoWatchWSPayload :: (Member UC.WebSocket r, Member (Output BS.ByteString) r, Member Trace r) => WSAppConfig r
 cryptoWatchWSPayload = WSAppConfig onOpen onMessage
   where
     onOpen = subscribeOnOpen krakenSub
     krakenSub = CW.subscribePayload ["markets:87:trades"]
-    onMessage = embed . BS.putStrLn
+    onMessage = output
 
-makeWSConfig :: (Member (Embed IO) r, Member UC.WebSocket r) => Exchange -> WSTarget r
+makeWSConfig :: (Member UC.WebSocket r, Member Trace r, Member (Output BS.ByteString) r) => Exchange -> WSTarget r
 makeWSConfig (CryptoWatch apiKey) =
     let host = "stream.cryptowat.ch"
         port = 443
