@@ -4,19 +4,16 @@ import Control.Concurrent.STM
 import Control.Exception (SomeException, catch, throw)
 import Control.Lens.Operators
 import qualified Data.ByteString.Lazy.Char8 as BS
-import qualified Domain.CryptoWatch.WS as CW
 import Domain.Targets
 import Domain.WebSocket
 import InterfaceAdapters.Interpreters.Concurrent
 import InterfaceAdapters.WebSocketApp.Builder
 import InterfaceAdapters.WebSocketInterpreters
-import qualified Network.WebSockets as WS
 import Polysemy (embed, runM)
 import Polysemy.Async (asyncToIO)
 import Polysemy.Input (runInputConst)
 import Polysemy.Output
 import Polysemy.Trace
-import Polysemy.Writer
 import System.Environment
 import System.Posix.Signals
 import qualified UseCases.WebSocketManager as UC
@@ -53,14 +50,23 @@ runWithOptions (WSClientOptions exchange globalChan isRunning) = do
     wsApp = makeWSApp $ appConfig wsTarget
     app conn =
         wsApp
+            -- Input (TChan Int)
             & runInputConst globalChan
+            -- UseCases.WebSocket
             & runWStoIO
+            -- UseCases.Polysemy.Concurrent
             & runConcurrentIO
+            -- Trace
             & traceToIO
+            -- Output ByteString
             & runOutputSem logMessages
+            -- Input Network.WebSocket.Connection
             & runInputConst conn
+            -- Async
             & asyncToIO
+            -- Embed STM
             & runSTMtoIO
+            -- Embed IO
             & runM
     logMessages m = embed $ BS.putStrLn m
 
