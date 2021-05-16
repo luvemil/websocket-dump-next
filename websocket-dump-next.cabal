@@ -40,6 +40,7 @@ library
       InterfaceAdapters.WebSocketApp.Builder
       InterfaceAdapters.WebSocketApp.IO
       InterfaceAdapters.WebSocketInterpreters
+      Lib.Control.Retry
       Lib.StringNum
       Lib.Utils
       UseCases.CommandInterpreter

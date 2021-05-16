@@ -1,7 +1,6 @@
 module InterfaceAdapters.WebSocketApp.IO where
 
 import Control.Concurrent.STM
-import Control.Exception (SomeException, catch, throw)
 import Control.Lens.Operators
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Domain.Targets
@@ -9,6 +8,7 @@ import Domain.WebSocket
 import InterfaceAdapters.Interpreters.Concurrent
 import InterfaceAdapters.WebSocketApp.Builder
 import InterfaceAdapters.WebSocketInterpreters
+import Lib.Control.Retry
 import Polysemy (embed, runM)
 import Polysemy.Async (asyncToIO)
 import Polysemy.Input (runInputConst)
@@ -28,30 +28,22 @@ data WSClientOptions = WSClientOptions
     , runningState :: TVar WSRunningState
     }
 
--- | TODO: add backoff strategy
-restartWhile :: TVar a -> (a -> Bool) -> IO b -> IO b
-restartWhile s t a =
-    a `catch` onError
-  where
-    onError (e :: SomeException) = do
-        val <- readTVarIO s
-        if t val
-            then restartWhile s t a
-            else throw e
-
 -- Out to IO ()
 runWithOptions :: WSClientOptions -> IO ()
 runWithOptions (WSClientOptions exchange globalChan isRunning) = do
-    restartWhile isRunning (== WSOn) main
+    (backoffConfig, isOnVar) <- makeExponentialBackoff (1000 * 1000) False (Just $ 180 * 1000 * 1000)
+    restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar)
   where
-    main = runSecureClient host port path app
+    main isOnVar = runSecureClient host port path (app isOnVar)
     wsTarget = UC.makeWSConfig exchange
     (WSClientConfig host port path) = clientConfig wsTarget
     wsApp = makeWSApp $ appConfig wsTarget
-    app conn =
+    app isOnVar conn =
         wsApp
             -- Input (TChan Int)
             & runInputConst globalChan
+            -- Input (TVar Bool)
+            & runInputConst isOnVar
             -- UseCases.WebSocket
             & runWStoIO
             -- UseCases.Polysemy.Concurrent
