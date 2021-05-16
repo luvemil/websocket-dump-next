@@ -31,16 +31,19 @@ data WSClientOptions = WSClientOptions
 -- Out to IO ()
 runWithOptions :: WSClientOptions -> IO ()
 runWithOptions (WSClientOptions exchange globalChan isRunning) = do
-    restartWhile isRunning (== WSOn) main
+    (backoffConfig, isOnVar) <- makeExponentialBackoff (1000 * 1000) False (Just $ 180 * 1000 * 1000)
+    restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar)
   where
-    main = runSecureClient host port path app
+    main isOnVar = runSecureClient host port path (app isOnVar)
     wsTarget = UC.makeWSConfig exchange
     (WSClientConfig host port path) = clientConfig wsTarget
     wsApp = makeWSApp $ appConfig wsTarget
-    app conn =
+    app isOnVar conn =
         wsApp
             -- Input (TChan Int)
             & runInputConst globalChan
+            -- Input (TVar Bool)
+            & runInputConst isOnVar
             -- UseCases.WebSocket
             & runWStoIO
             -- UseCases.Polysemy.Concurrent
