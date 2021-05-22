@@ -1,11 +1,14 @@
 module InterfaceAdapters.WebSocketApp.IO where
 
+import Control.Concurrent
 import Control.Concurrent.STM
 import Control.Lens.Operators
+import Control.Monad (forever)
 import qualified Data.ByteString.Lazy.Char8 as BS
 import Data.Maybe (fromMaybe)
 import Domain.Targets
 import Domain.WebSocket
+import GHC.IO.Handle
 import InterfaceAdapters.FileOutput
 import InterfaceAdapters.Interpreters.Concurrent
 import InterfaceAdapters.WebSocketApp.Builder
@@ -39,6 +42,14 @@ runWithOptions (WSClientOptions exchange globalChan isRunning dir filePrefix) = 
     (backoffConfig, isOnVar) <- makeExponentialBackoff (1000 * 1000) False (Just $ 180 * 1000 * 1000)
     SysDir.createDirectoryIfMissing True dir
     outputHandleVar <- newTMVarIO =<< outputFileHandle dir filePrefix ".out"
+    _ <- forkIO . forever $ do
+        threadDelay (60 * 1000 * 1000) -- 1h
+        newHandle <- outputFileHandle dir filePrefix ".out"
+        oldHandle <- atomically $ do
+            h <- takeTMVar outputHandleVar
+            putTMVar outputHandleVar newHandle
+            pure h
+        hClose oldHandle
     restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar outputHandleVar)
   where
     main isOnVar outputHandleVar = runSecureClient host port path (app isOnVar outputHandleVar)

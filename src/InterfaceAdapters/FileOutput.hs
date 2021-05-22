@@ -75,8 +75,12 @@ writeToFile msg = do
 
 withHandle :: (Member (Embed STM) r, Member (Input (TMVar Handle)) r) => (Handle -> Sem r a) -> Sem r a
 withHandle action = do
-    handleVar <- input
-    h <- embed $ takeTMVar handleVar
+    h <- input
+    withHandleM h embed action
+
+withHandleM :: Monad m => TMVar Handle -> (forall a. STM a -> m a) -> (Handle -> m b) -> m b
+withHandleM handleVar embedSTM action = do
+    h <- embedSTM $ takeTMVar handleVar
     res <- action h
-    embed $ putTMVar handleVar h
+    embedSTM $ putTMVar handleVar h
     pure res
