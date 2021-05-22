@@ -1,12 +1,10 @@
 module UseCases.WebSocketManager where
 
-import Control.Concurrent
 import Control.Concurrent.STM
 import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Domain.CryptoWatch.WS as CW
 import Domain.Targets
 import Domain.WebSocket
-import qualified Network.WebSockets as WS
 import Polysemy
 import Polysemy.Async
 import Polysemy.Input

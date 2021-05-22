@@ -44,6 +44,8 @@ dependencies:
   - unliftio-core
   - unix
   - stm
+  - filepath
+  - directory
 
 ghc-options:
   - -Wall

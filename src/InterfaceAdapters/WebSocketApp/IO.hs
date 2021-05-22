@@ -3,8 +3,10 @@ module InterfaceAdapters.WebSocketApp.IO where
 import Control.Concurrent.STM
 import Control.Lens.Operators
 import qualified Data.ByteString.Lazy.Char8 as BS
+import Data.Maybe (fromMaybe)
 import Domain.Targets
 import Domain.WebSocket
+import InterfaceAdapters.FileOutput
 import InterfaceAdapters.Interpreters.Concurrent
 import InterfaceAdapters.WebSocketApp.Builder
 import InterfaceAdapters.WebSocketInterpreters
@@ -14,6 +16,7 @@ import Polysemy.Async (asyncToIO)
 import Polysemy.Input (runInputConst)
 import Polysemy.Output
 import Polysemy.Trace
+import qualified System.Directory as SysDir
 import System.Environment
 import System.Posix.Signals
 import qualified UseCases.WebSocketManager as UC
@@ -26,19 +29,23 @@ data WSClientOptions = WSClientOptions
     { exchange :: Exchange
     , globalChan :: TChan Int
     , runningState :: TVar WSRunningState
+    , outputDirectory :: FilePath
+    , outputFile :: FilePath
     }
 
 -- Out to IO ()
 runWithOptions :: WSClientOptions -> IO ()
-runWithOptions (WSClientOptions exchange globalChan isRunning) = do
+runWithOptions (WSClientOptions exchange globalChan isRunning dir filePrefix) = do
     (backoffConfig, isOnVar) <- makeExponentialBackoff (1000 * 1000) False (Just $ 180 * 1000 * 1000)
-    restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar)
+    SysDir.createDirectoryIfMissing True dir
+    outputHandleVar <- newTMVarIO =<< outputFileHandle dir filePrefix ".out"
+    restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar outputHandleVar)
   where
-    main isOnVar = runSecureClient host port path (app isOnVar)
+    main isOnVar outputHandleVar = runSecureClient host port path (app isOnVar outputHandleVar)
     wsTarget = UC.makeWSConfig exchange
     (WSClientConfig host port path) = clientConfig wsTarget
     wsApp = makeWSApp $ appConfig wsTarget
-    app isOnVar conn =
+    app isOnVar outputHandleVar conn =
         wsApp
             -- Input (TChan Int)
             & runInputConst globalChan
@@ -52,6 +59,8 @@ runWithOptions (WSClientOptions exchange globalChan isRunning) = do
             & traceToIO
             -- Output ByteString
             & runOutputSem logMessages
+            -- Input (TMVar Handle)
+            & runInputConst outputHandleVar
             -- Input Network.WebSocket.Connection
             & runInputConst conn
             -- Async
@@ -60,10 +69,15 @@ runWithOptions (WSClientOptions exchange globalChan isRunning) = do
             & runSTMtoIO
             -- Embed IO
             & runM
-    logMessages m = embed $ BS.putStrLn m
+    logMessages msg = withHandle (\h -> embed $ BS.hPutStrLn h msg)
 
-myWebSocketApp :: IO ()
-myWebSocketApp = do
+myWebSocketApp ::
+    -- | Output dir
+    Maybe String ->
+    -- | Output file
+    String ->
+    IO ()
+myWebSocketApp dirMaybe file = do
     apiKey <- lookupEnv "CW_API_KEY"
     mainChannel <- newBroadcastTChanIO
     isRunning <- newTVarIO WSOn
@@ -72,7 +86,8 @@ myWebSocketApp = do
             atomically $ do
                 writeTVar isRunning WSOff
                 writeTChan mainChannel (-1 :: Int)
+        dir = fromMaybe "output" dirMaybe
     _ <- installHandler keyboardSignal (Catch handleClose) Nothing
     case apiKey of
-        Just key -> runWithOptions (WSClientOptions (CryptoWatch key) mainChannel isRunning)
+        Just key -> runWithOptions (WSClientOptions (CryptoWatch key) mainChannel isRunning dir file)
         Nothing -> fail "CW_API_KEY not found"
