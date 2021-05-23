@@ -1,0 +1,57 @@
+# Source: https://vrom911.github.io/blog/github-actions-releases
+on: [push]
+
+jobs:
+  build_binary:
+    name: ${{ matrix.os }}/GHC ${{ matrix.ghc }}/${{ github.ref }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        ghc:
+          - "8.10.2"
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Setup Haskell
+        uses: haskell/actions/setup@v1
+        id: setup-haskell-stack
+        with:
+          ghc-version: ${{ matrix.ghc }} # Exact version of ghc to use
+          # cabal-version: 'latest'. Omitted, but defaults to 'latest'
+          enable-stack: true
+          stack-version: "latest"
+
+      - name: Setup SSH Keys and known_hosts
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+          ssh-add - <<< "${{ secrets.SSH_PRIVATE_KEY }}"
+
+      - name: Cache stack files
+        uses: actions/cache@v2
+        with:
+          path: |
+            .stack-work
+            ~/.stack
+          key: ${{ runner.os }}-${{ matrix.ghc }}-stack
+
+      - name: Install dependencies
+        run: |
+          stack build --system-ghc --only-dependencies
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+
+      - name: Build binary
+        run: |
+          mkdir dist
+          stack build --system-ghc --copy-bins --local-bin-path dist
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: websocket-dump-next-exe
+          path: ./dist/websocket-dump-next-exe
