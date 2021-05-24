@@ -1,5 +1,6 @@
 module InterfaceAdapters.WebSocketInterpreters where
 
+import qualified Data.ByteString.Lazy.Char8 as BS
 import qualified Network.WebSockets as WS
 import Polysemy
 import Polysemy.Input
@@ -7,7 +8,7 @@ import qualified UseCases.WebSocket as UC
 
 runWStoIO ::
     (Member (Input WS.Connection) r, Member (Embed IO) r) =>
-    Sem (UC.WebSocket : r) a ->
+    Sem (UC.WebSocket BS.ByteString : r) a ->
     Sem r a
 runWStoIO = interpret $ \case
     UC.SendTextData msg -> do

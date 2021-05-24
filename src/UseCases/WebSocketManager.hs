@@ -14,7 +14,7 @@ import qualified UseCases.Polysemy.Concurrent as UC
 import qualified UseCases.WebSocket as UC
 
 subscribeAndCloseAfter ::
-    (Member UC.Concurrent r, Member Async r, Member UC.WebSocket r, Member Trace r) =>
+    (Member UC.Concurrent r, Member Async r, Member (UC.WebSocket BS.ByteString) r, Member Trace r) =>
     BS.ByteString ->
     Int ->
     Sem r ()
@@ -26,7 +26,7 @@ subscribeAndCloseAfter subMsg delay = do
         UC.sendClose ("Close" :: BS.ByteString)
     UC.sendTextData subMsg
 
-subscribeOnOpen :: (Member UC.WebSocket r, Member Trace r) => BS.ByteString -> Sem r ()
+subscribeOnOpen :: (Member (UC.WebSocket a) r, Member Trace r) => a -> Sem r ()
 subscribeOnOpen subMsg = do
     trace "Sending subscribe message"
     UC.sendTextData subMsg
@@ -37,7 +37,7 @@ notifyWSOn msg = do
     isOnVar :: TVar Bool <- input
     embed $ modifyTVar' isOnVar (const True)
 
-type CryptoWatchEffectRow r = (Member UC.WebSocket r, Member (Output BS.ByteString) r, Member Trace r, Member (Embed STM) r, Member (Input (TVar Bool)) r)
+type CryptoWatchEffectRow r = (Member (UC.WebSocket BS.ByteString) r, Member (Output BS.ByteString) r, Member Trace r, Member (Embed STM) r, Member (Input (TVar Bool)) r)
 
 cryptoWatchWSPayload :: CryptoWatchEffectRow r => WSAppConfig r
 cryptoWatchWSPayload = WSAppConfig onOpen onMessage

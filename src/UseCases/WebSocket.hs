@@ -2,12 +2,11 @@
 
 module UseCases.WebSocket where
 
-import qualified Network.WebSockets as WS
 import Polysemy
 
-data WebSocket r a where
-    SendTextData :: WS.WebSocketsData b => b -> WebSocket r ()
-    ReceiveData :: WS.WebSocketsData b => WebSocket r b
-    SendClose :: WS.WebSocketsData b => b -> WebSocket r ()
+data WebSocket msg r a where
+    SendTextData :: msg -> WebSocket msg r ()
+    ReceiveData :: WebSocket msg r msg
+    SendClose :: msg -> WebSocket msg r ()
 
 makeSem ''WebSocket

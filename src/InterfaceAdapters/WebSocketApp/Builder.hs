@@ -13,7 +13,7 @@ import qualified UseCases.Polysemy.Concurrent as UC
 import qualified UseCases.WebSocket as UC
 
 makeWSApp ::
-    (Member UC.Concurrent r, Member (Embed STM) r, Member Async r, Member (Input (TChan Int)) r, Member UC.WebSocket r, Member Trace r) =>
+    (Member UC.Concurrent r, Member (Embed STM) r, Member Async r, Member (Input (TChan Int)) r, Member (UC.WebSocket BS.ByteString) r, Member Trace r) =>
     WSAppConfig r ->
     Sem r ()
 makeWSApp (WSAppConfig onOpen onMessage) = do
