@@ -32,4 +32,4 @@ makeWSApp (WSAppConfig onOpen onMessage) = do
                 _ -> pure ()
     forever $ do
         msg <- UC.receiveData
-        onMessage msg
+        async $ onMessage msg
