@@ -41,14 +41,24 @@ runWithOptions :: WSClientOptions -> IO ()
 runWithOptions (WSClientOptions exchange globalChan isRunning dir filePrefix) = do
     (backoffConfig, isOnVar) <- makeExponentialBackoff (1000 * 1000) False (Just $ 180 * 1000 * 1000)
     SysDir.createDirectoryIfMissing True dir
-    outputHandleVar <- newTMVarIO =<< outputFileHandle dir filePrefix ".out"
+    fileName <- outputFileName dir filePrefix ".out"
+    curFileNameVar <- newTVarIO fileName
+    outputHandleVar <- newTMVarIO =<< openOutputHandle fileName
+    -- create lock file
+    lockHandleVar <- newTMVarIO =<< openOutputHandle (fileName ++ ".lock")
     _ <- forkIO . forever $ do
         threadDelay (60 * 1000 * 1000) -- 1h
-        newHandle <- outputFileHandle dir filePrefix ".out"
-        oldHandle <- atomically $ do
+        newFileName <- outputFileName dir filePrefix ".out"
+        newHandle <- openOutputHandle newFileName
+        newLockHandle <- openOutputHandle $ newFileName ++ ".lock"
+        (oldHandle, oldLockHandle) <- atomically $ do
             h <- takeTMVar outputHandleVar
             putTMVar outputHandleVar newHandle
-            pure h
+            -- update lock file
+            lh <- takeTMVar lockHandleVar
+            putTMVar lockHandleVar newLockHandle
+            pure (h, lh)
+        -- remove lock file
         hClose oldHandle
     restartWithBackoff backoffConfig isRunning (== WSOn) (main isOnVar outputHandleVar)
   where

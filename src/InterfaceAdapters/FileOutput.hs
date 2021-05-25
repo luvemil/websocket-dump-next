@@ -48,6 +48,13 @@ buildFileName dir file ext date =
     let suffix = formatTime defaultTimeLocale fileDateSuffixFormat date
      in dir </> (file ++ suffix) <.> ext
 
+outputFileName :: String -> String -> String -> IO String
+outputFileName dir file ext = do
+    buildFileName dir file ext <$> getCurrentTime
+
+openOutputHandle :: String -> IO Handle
+openOutputHandle fn = openBinaryFile fn WriteMode
+
 outputFileHandle :: String -> String -> String -> IO Handle
 outputFileHandle dir file ext = do
     date <- getCurrentTime
